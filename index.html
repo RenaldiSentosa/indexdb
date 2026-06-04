@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Pengguna - IndexedDB</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; margin: 20px; color: #333; }
+        h2 { text-align: center; color: #2c3e50; }
+        
+        .container { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
+        .card-table { flex: 2; min-width: 500px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; }
+        .btn-add { background-color: #2ecc71; color: white; }
+        .btn-update { background-color: #3498db; color: white; }
+        .btn-delete { background-color: #e74c3c; color: white; }
+        .btn-clear { background-color: #95a5a6; color: white; }
+        button:hover { opacity: 0.9; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #34495e; color: white; }
+        tr:hover { background-color: #f1f2f6; cursor: pointer; }
+        
+        .empty-row { text-align: center; color: #7f8c8d; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <h2>Manajemen Pengguna (CRUD IndexedDB)</h2>
+
+    <div class="container">
+        <div class="card">
+            <h3>Form Pengguna</h3>
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="id">ID Pengguna</label>
+                    <input type="text" id="id" placeholder="Contoh: USR01" required>
+                </div>
+                <div class="form-group">
+                    <label for="nama">Nama</label>
+                    <input type="text" id="nama" placeholder="Masukkan nama lengkap" required>
+                </div>
+                <div class="form-group">
+                    <label for="sandi">Kata Sandi</label>
+                    <input type="password" id="sandi" placeholder="Masukkan kata sandi" required>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" required>
+                        <option value="Aktif">Aktif</option>
+                        <option value="Tidak Aktif">Tidak Aktif</option>
+                    </select>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn-add" id="btnCreate" onclick="addData()">Simpan</button>
+                    <button type="button" class="btn-update" id="btnUpdate" onclick="updateData()" style="display:none;">Ubah</button>
+                    <button type="button" class="btn-delete" id="btnDelete" onclick="deleteData()" style="display:none;">Hapus</button>
+                    <button type="button" class="btn-clear" onclick="resetForm()">Batal</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card card-table">
+            <h3>Daftar Pengguna</h3>
+            <div style="overflow-x: auto;">
+                <table id="userTable">
+                    <thead id="tableHead">
+                        </thead>
+                    <tbody id="tableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi Database IndexedDB
+        const dbName = "AplikasiLoginDB";
+        const dbVersion = 1;
+        const storeName = "pengguna";
+        let db;
+
+        // 1. Inisialisasi & Buka Koneksi Database
+        const request = indexedDB.open(dbName, dbVersion);
+
+        request.onupgradeneeded = function(e) {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains(storeName)) {
+                // Membuat object store dengan 'id' sebagai keyPath utama
+                db.createObjectStore(storeName, { keyPath: "id" });
+            }
+        };
+
+        request.onsuccess = function(e) {
+            db = e.target.result;
+            renderTable(); // Tampilkan data saat berhasil terkoneksi
+        };
+
+        request.onerror = function(e) {
+            console.error("Gagal membuka database:", e.target.error);
+        };
+
+        // 2. Fungsi Ambil Object Store (Helper)
+        function getObjectStore(mode) {
+            const transaction = db.transaction(storeName, mode);
+            return transaction.objectStore(storeName);
+        }
+
+        // 3. Tambah Data (Create)
+        function addData() {
+            const id = document.getElementById('id').value.trim();
+            const nama = document.getElementById('nama').value.trim();
+            const sandi = document.getElementById('sandi').value;
+            const status = document.getElementById('status').value;
+
+            if(!id || !nama || !sandi) return alert("Semua field harus diisi!");
+
+            const store = getObjectStore("readwrite");
+            const data = { id, nama, sandi, status };
+
+            const request = store.add(data);
+            request.onsuccess = function() {
+                alert("Data berhasil ditambahkan!");
+                resetForm();
+                renderTable();
+            };
+            request.onerror = function(e) {
+                alert("Gagal menambahkan data! ID mungkin sudah digunakan.");
+                console.error(e.target.error);
+            };
+        }
+
+        // 4. Ubah Data (Update)
+        function updateData() {
+            const id = document.getElementById('id').value;
+            const nama = document.getElementById('nama').value;
+            const sandi = document.getElementById('sandi').value;
+            const status = document.getElementById('status').value;
+
+            const store = getObjectStore("readwrite");
+            const data = { id, nama, sandi, status };
+
+            const request = store.put(data); // 'put' otomatis menimpa data lama jika ID sama
+            request.onsuccess = function() {
+                alert("Data berhasil diperbarui!");
+                resetForm();
+                renderTable();
+            };
+        }
+
+        // 5. Hapus Data (Delete)
+        function deleteData() {
+            const id = document.getElementById('id').value;
+            if(confirm(`Apakah Anda yakin ingin menghapus pengguna dengan ID: ${id}?`)) {
+                const store = getObjectStore("readwrite");
+                const request = store.delete(id);
+                request.onsuccess = function() {
+                    alert("Data berhasil dihapus!");
+                    resetForm();
+                    renderTable();
+                };
+            }
+        }
+
+        // 6. Tampilkan Tabel secara Dinamis berdasarkan data yang ada
+        function renderTable() {
+            const store = getObjectStore("readonly");
+            const request = store.getAll();
+
+            request.onsuccess = function(e) {
+                const listData = e.target.result;
+                const thead = document.getElementById('tableHead');
+                const tbody = document.getElementById('tableBody');
+                
+                thead.innerHTML = "";
+                tbody.innerHTML = "";
+
+                if (listData.length === 0) {
+                    thead.innerHTML = `<tr><th>Data Kosonng</th></tr>`;
+                    tbody.innerHTML = `<tr><td class="empty-row">Belum ada data pengguna. Silakan tambah data baru.</td></tr>`;
+                    return;
+                }
+
+                // Mengambil nama kolom secara dinamis dari kunci (keys) objek data pertama
+                // Contoh output: ['id', 'nama', 'sandi', 'status']
+                const columns = Object.keys(listData[0]);
+                
+                // Render Header Tabel Dinamis
+                let headRow = "<tr>";
+                columns.forEach(col => {
+                    headRow += `<th>${col.toUpperCase()}</th>`;
+                });
+                headRow += "</tr>";
+                thead.innerHTML = headRow;
+
+                // Render Baris Kolom Dinamis
+                listData.forEach(item => {
+                    let bodyRow = document.createElement('tr');
+                    
+                    // Mengisi nilai sesuai urutan kolom yang terdeteksi
+                    columns.forEach(col => {
+                        let td = document.createElement('td');
+                        // Proteksi tampilan sandi agar tidak kelihatan langsung di tabel (opsional)
+                        td.textContent = (col === 'sandi') ? '••••••••' : item[col];
+                        bodyRow.appendChild(td);
+                    });
+
+                    // Event Klik Baris untuk Otomatisasi Mengisi Form
+                    bodyRow.onclick = function() {
+                        fillForm(item);
+                    };
+
+                    tbody.appendChild(bodyRow);
+                });
+            };
+        }
+
+        // 7. Isi Form Otomatis dari Baris Terpilih (Klik)
+        function fillForm(data) {
+            document.getElementById('id').value = data.id;
+            document.getElementById('id').disabled = true; // ID tidak boleh diubah saat edit
+            document.getElementById('nama').value = data.nama;
+            document.getElementById('sandi').value = data.sandi;
+            document.getElementById('status').value = data.status;
+
+            // Atur visibilitas tombol aksi
+            document.getElementById('btnCreate').style.display = "none";
+            document.getElementById('btnUpdate').style.display = "inline-block";
+            document.getElementById('btnDelete').style.display = "inline-block";
+        }
+
+        // 8. Reset Form ke Keadaan Semula
+        function resetForm() {
+            document.getElementById('userForm').reset();
+            document.getElementById('id').disabled = false;
+            
+            // Kembalikan visibilitas tombol aksi
+            document.getElementById('btnCreate').style.display = "inline-block";
+            document.getElementById('btnUpdate').style.display = "none";
+            document.getElementById('btnDelete').style.display = "none";
+        }
+    </script>
+</body>
+</html>
