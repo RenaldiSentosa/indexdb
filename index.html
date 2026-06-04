@@ -3,28 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD Pengguna - Offline Ready</title>
+    <title>CRUD Pengguna - PWA Premium</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        /* ... (CSS sama persis seperti kode sebelumnya) ... */
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #f4f6f9; margin: 20px; }
-        .container { display: flex; gap: 20px; flex-wrap: wrap; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
-        .card-table { flex: 2; min-width: 500px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; flex: 1; }
-        .btn-add { background-color: #2ecc71; color: white; }
-        .btn-update { background-color: #3498db; color: white; }
-        .btn-delete { background-color: #e74c3c; color: white; }
-        .btn-clear { background-color: #95a5a6; color: white; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 12px; }
-        th { background-color: #34495e; color: white; }
-        tr:hover { background-color: #f1f2f6; cursor: pointer; }
+        /* --- RESET & ROOT VARIABLES --- */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+        }
+        
+        :root {
+            --bg-color: #0f172a;       /* Slate 900 (Gelap Premium) */
+            --card-bg: #1e293b;        /* Slate 800 */
+            --text-main: #f8fafc;      /* Slate 50 */
+            --text-muted: #94a3b8;     /* Slate 400 */
+            --primary: #3b82f6;        /* Blue 500 */
+            --primary-hover: #2563eb;  /* Blue 600 */
+            --success: #10b981;        /* Emerald 500 */
+            --success-hover: #059669;
+            --danger: #ef4444;         /* Rose 500 */
+            --danger-hover: #dc2626;
+            --secondary: #475569;      /* Slate 600 */
+            --secondary-hover: #334155;
+            --border-color: #334155;   /* Slate 700 */
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h2 { 
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin-bottom: 30px;
+            text-align: center;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* --- LAYOUT CONTAINER --- */
+        .container { 
+            display: flex; 
+            gap: 30px; 
+            flex-wrap: wrap; 
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* --- CARDS BASE --- */
+        .card { 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            flex: 1; 
+            min-width: 320px; 
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-table { 
+            flex: 2; 
+            min-width: 500px; 
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            border-left: 4px solid var(--primary);
+            padding-left: 10px;
+        }
+        
+        /* --- FORMS --- */
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-size: 0.875rem;
+            font-weight: 600; 
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 12px 16px; 
+            background-color: #0f172a;
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus { 
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-group input:disabled {
+            background-color: #1e293b;
+            color: var(--text-muted);
+            cursor: not-allowed;
+            border-style: dashed;
+        }
+        
+        /* --- BUTTONS --- */
+        .btn-group { 
+            display: flex; 
+            gap: 12px; 
+            margin-top: 25px; 
+        }
+
+        button { 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 0.95rem;
+            flex: 1; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-add { background-color: var(--success); color: white; }
+        .btn-add:hover { background-color: var(--success-hover); }
+
+        .btn-update { background-color: var(--primary); color: white; }
+        .btn-update:hover { background-color: var(--primary-hover); }
+
+        .btn-delete { background-color: var(--danger); color: white; }
+        .btn-delete:hover { background-color: var(--danger-hover); }
+
+        .btn-clear { background-color: var(--secondary); color: white; }
+        .btn-clear:hover { background-color: var(--secondary-hover); }
+        
+        /* --- DYNAMIC TABLE --- */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background: #0f172a; 
+            text-align: left;
+        }
+
+        th, td { 
+            padding: 14px 20px; 
+            font-size: 0.95rem;
+        }
+
+        th { 
+            background-color: #1e293b; 
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        tr {
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover { 
+            background-color: #243249 !important; 
+            cursor: pointer; 
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #141d2e;
+        }
+        
+        .empty-row { 
+            text-align: center; 
+            color: var(--text-muted); 
+            font-style: italic; 
+            padding: 30px;
+        }
+
+        /* Responsif Mobile */
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .container { gap: 20px; }
+            .card-table { min-width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -35,16 +236,26 @@
         <div class="card">
             <h3>Form Pengguna</h3>
             <form id="userForm">
-                <div class="form-group"><label>ID</label><input type="text" id="id" required></div>
-                <div class="form-group"><label>Nama</label><input type="text" id="nama" required></div>
-                <div class="form-group"><label>Sandi</label><input type="password" id="sandi" required></div>
                 <div class="form-group">
-                    <label>Status</label>
+                    <label for="id">ID Pengguna</label>
+                    <input type="text" id="id" placeholder="Contoh: USR01" required>
+                </div>
+                <div class="form-group">
+                    <label for="nama">Nama</label>
+                    <input type="text" id="nama" placeholder="Masukkan nama lengkap" required>
+                </div>
+                <div class="form-group">
+                    <label for="sandi">Kata Sandi</label>
+                    <input type="password" id="sandi" placeholder="Masukkan kata sandi" required>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
                     <select id="status" required>
                         <option value="Aktif">Aktif</option>
                         <option value="Tidak Aktif">Tidak Aktif</option>
                     </select>
                 </div>
+                
                 <div class="btn-group">
                     <button type="button" class="btn-add" id="btnCreate" onclick="addData()">Simpan</button>
                     <button type="button" class="btn-update" id="btnUpdate" onclick="updateData()" style="display:none;">Ubah</button>
@@ -56,91 +267,175 @@
 
         <div class="card card-table">
             <h3>Daftar Pengguna</h3>
-            <table id="userTable">
-                <thead id="tableHead"></tbody>
-                <tbody id="tableBody"></tbody>
-            </table>
+            <div class="table-container">
+                <table id="userTable">
+                    <thead id="tableHead">
+                        </thead>
+                    <tbody id="tableBody">
+                        </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- LOGIK INDEXTEDDB (Sama seperti kemarin) ---
+        // --- KONFIGURASI INDEXEDDB ---
         const dbName = "AplikasiLoginDB";
         const dbVersion = 1;
         const storeName = "pengguna";
         let db;
 
         const request = indexedDB.open(dbName, dbVersion);
-        request.onupgradeneeded = e => {
-            db = e.target.result;
-            if (!db.objectStoreNames.contains(storeName)) db.createObjectStore(storeName, { keyPath: "id" });
-        };
-        request.onsuccess = e => { db = e.target.result; renderTable(); };
-        
-        function getObjectStore(mode) { return db.transaction(storeName, mode).objectStore(storeName); }
 
+        request.onupgradeneeded = function(e) {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains(storeName)) {
+                db.createObjectStore(storeName, { keyPath: "id" });
+            }
+        };
+
+        request.onsuccess = function(e) {
+            db = e.target.result;
+            renderTable();
+        };
+
+        request.onerror = function(e) {
+            console.error("Gagal membuka database:", e.target.error);
+        };
+
+        function getObjectStore(mode) {
+            const transaction = db.transaction(storeName, mode);
+            return transaction.objectStore(storeName);
+        }
+
+        // --- OPERASI CRUD ---
         function addData() {
             const id = document.getElementById('id').value.trim();
             const nama = document.getElementById('nama').value.trim();
             const sandi = document.getElementById('sandi').value;
             const status = document.getElementById('status').value;
-            if(!id || !nama || !sandi) return alert("Isi semua data!");
-            
-            const request = getObjectStore("readwrite").add({ id, nama, sandi, status });
-            request.onsuccess = () => { alert("Data ditambah!"); resetForm(); renderTable(); };
+
+            if(!id || !nama || !sandi) return alert("Semua field harus diisi!");
+
+            const store = getObjectStore("readwrite");
+            const data = { id, nama, sandi, status };
+
+            const request = store.add(data);
+            request.onsuccess = function() {
+                alert("Data berhasil ditambahkan!");
+                resetForm();
+                renderTable();
+            };
+            request.onerror = function(e) {
+                alert("Gagal menambahkan data! ID mungkin sudah digunakan.");
+                console.error(e.target.error);
+            };
         }
 
         function updateData() {
-            const data = { id: document.getElementById('id').value, nama: document.getElementById('nama').value, sandi: document.getElementById('sandi').value, status: document.getElementById('status').value };
-            getObjectStore("readwrite").put(data).onsuccess = () => { alert("Data diubah!"); resetForm(); renderTable(); };
+            const id = document.getElementById('id').value;
+            const nama = document.getElementById('nama').value;
+            const sandi = document.getElementById('sandi').value;
+            const status = document.getElementById('status').value;
+
+            const store = getObjectStore("readwrite");
+            const data = { id, nama, sandi, status };
+
+            const request = store.put(data);
+            request.onsuccess = function() {
+                alert("Data berhasil diperbarui!");
+                resetForm();
+                renderTable();
+            };
         }
 
         function deleteData() {
             const id = document.getElementById('id').value;
-            if(confirm("Hapus data?")) { getObjectStore("readwrite").delete(id).onsuccess = () => { alert("Data dihapus!"); resetForm(); renderTable(); }; }
+            if(confirm(`Apakah Anda yakin ingin menghapus pengguna dengan ID: ${id}?`)) {
+                const store = getObjectStore("readwrite");
+                const request = store.delete(id);
+                request.onsuccess = function() {
+                    alert("Data berhasil dihapus!");
+                    resetForm();
+                    renderTable();
+                };
+            }
         }
 
+        // --- RENDER TABEL DINAMIS ---
         function renderTable() {
-            getObjectStore("readonly").getAll().onsuccess = e => {
+            const store = getObjectStore("readonly");
+            const request = store.getAll();
+
+            request.onsuccess = function(e) {
                 const listData = e.target.result;
                 const thead = document.getElementById('tableHead');
                 const tbody = document.getElementById('tableBody');
-                thead.innerHTML = ""; tbody.innerHTML = "";
-                if (listData.length === 0) { thead.innerHTML = "<tr><th>Kosong</th></tr>"; return; }
                 
+                thead.innerHTML = "";
+                tbody.innerHTML = "";
+
+                if (listData.length === 0) {
+                    thead.innerHTML = `<tr><th>Data Kosong</th></tr>`;
+                    tbody.innerHTML = `<tr><td class="empty-row">Belum ada data pengguna. Silakan tambah data baru.</td></tr>`;
+                    return;
+                }
+
                 const columns = Object.keys(listData[0]);
-                let headRow = "<tr>"; columns.forEach(col => headRow += `<th>${col.toUpperCase()}</th>`); thead.innerHTML = headRow + "</tr>";
+                
+                let headRow = "<tr>";
+                columns.forEach(col => {
+                    headRow += `<th>${col.toUpperCase()}</th>`;
+                });
+                headRow += "</tr>";
+                thead.innerHTML = headRow;
 
                 listData.forEach(item => {
                     let bodyRow = document.createElement('tr');
+                    
                     columns.forEach(col => {
                         let td = document.createElement('td');
-                        td.textContent = (col === 'sandi') ? '••••' : item[col];
+                        td.textContent = (col === 'sandi') ? '••••••••' : item[col];
                         bodyRow.appendChild(td);
                     });
-                    bodyRow.onclick = () => fillForm(item);
+
+                    bodyRow.onclick = function() {
+                        fillForm(item);
+                    };
+
                     tbody.appendChild(bodyRow);
                 });
             };
         }
 
+        // --- OTOMATISASI FORM ---
         function fillForm(data) {
-            document.getElementById('id').value = data.id; document.getElementById('id').disabled = true;
-            document.getElementById('nama').value = data.nama; document.getElementById('sandi').value = data.sandi; document.getElementById('status').value = data.status;
-            document.getElementById('btnCreate').style.display = "none"; document.getElementById('btnUpdate').style.display = "inline-block"; document.getElementById('btnDelete').style.display = "inline-block";
+            document.getElementById('id').value = data.id;
+            document.getElementById('id').disabled = true; 
+            document.getElementById('nama').value = data.nama;
+            document.getElementById('sandi').value = data.sandi;
+            document.getElementById('status').value = data.status;
+
+            document.getElementById('btnCreate').style.display = "none";
+            document.getElementById('btnUpdate').style.display = "inline-block";
+            document.getElementById('btnDelete').style.display = "inline-block";
         }
 
         function resetForm() {
-            document.getElementById('userForm').reset(); document.getElementById('id').disabled = false;
-            document.getElementById('btnCreate').style.display = "inline-block"; document.getElementById('btnUpdate').style.display = "none"; document.getElementById('btnDelete').style.display = "none";
+            document.getElementById('userForm').reset();
+            document.getElementById('id').disabled = false;
+            
+            document.getElementById('btnCreate').style.display = "inline-block";
+            document.getElementById('btnUpdate').style.display = "none";
+            document.getElementById('btnDelete').style.display = "none";
         }
 
-        // --- PROSES DAFTAR SERVICE WORKER AGAR BISA OFFLINE ---
+        // --- REGISTRASI SERVICE WORKER AGAR OFFLINE READY ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker terdaftar!', reg))
-                    .catch(err => console.error('Gagal daftar Service Worker', err));
+                    .then(reg => console.log('Service Worker aktif dan terdaftar!', reg))
+                    .catch(err => console.error('Gagal mendaftarkan Service Worker:', err));
             });
         }
     </script>
